@@ -7,8 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import models
+from .compliance import blocking_sbs, compliance_rows, overdue_mandatory_count
 from .db import Base, SessionLocal, engine, get_db
 from .schemas import (
+    EngineComplianceRow,
     EngineOut,
     ReleaseRequest,
     SbComplianceOut,
@@ -40,10 +42,22 @@ def health():
     return {"status": "ok"}
 
 
+def _all_sbs(db: Session) -> list[models.ServiceBulletin]:
+    return list(db.scalars(select(models.ServiceBulletin)).all())
+
+
 @app.get("/api/v1/engines", response_model=list[EngineOut])
 def list_engines(db: Session = Depends(get_db)):
-    rows = db.scalars(select(models.Engine).order_by(models.Engine.serial)).all()
-    return [EngineOut.from_orm_engine(e) for e in rows]
+    rows = db.scalars(
+        select(models.Engine)
+        .options(selectinload(models.Engine.compliance))
+        .order_by(models.Engine.serial)
+    ).all()
+    sbs = _all_sbs(db)
+    return [
+        EngineOut.from_orm_engine(e, overdue_mandatory_count(compliance_rows(e, sbs)))
+        for e in rows
+    ]
 
 
 def _engine_or_404(engine_id: int, db: Session) -> models.Engine:
@@ -53,9 +67,19 @@ def _engine_or_404(engine_id: int, db: Session) -> models.Engine:
     return e
 
 
+def _engine_compliance(engine: models.Engine, db: Session) -> list[EngineComplianceRow]:
+    return compliance_rows(engine, _all_sbs(db))
+
+
 @app.get("/api/v1/engines/{engine_id}", response_model=EngineOut)
 def get_engine(engine_id: int, db: Session = Depends(get_db)):
     return EngineOut.from_orm_engine(_engine_or_404(engine_id, db))
+
+
+@app.get("/api/v1/engines/{engine_id}/compliance", response_model=list[EngineComplianceRow])
+def get_engine_compliance(engine_id: int, db: Session = Depends(get_db)):
+    """One row per SB applicable to the engine (family + serial range), with overdue flag."""
+    return _engine_compliance(_engine_or_404(engine_id, db), db)
 
 
 @app.get("/api/v1/engines/{engine_id}/sb-records", response_model=list[SbComplianceOut])
@@ -129,6 +153,15 @@ def release_shop_visit(visit_id: int, body: ReleaseRequest, db: Session = Depend
     v = _shop_visit_or_404(visit_id, db)
     if v.status == models.ShopVisitStatus.RELEASED:
         raise HTTPException(status_code=409, detail="Shop visit already released")
+    blockers = blocking_sbs(_engine_compliance(v.engine, db))
+    if blockers:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Release blocked by overdue mandatory SBs",
+                "blockingSbs": [b.model_dump() for b in blockers],
+            },
+        )
     v.status = models.ShopVisitStatus.RELEASED
     v.released_at = datetime.now(timezone.utc).replace(tzinfo=None)
     v.released_by = body.releasedBy

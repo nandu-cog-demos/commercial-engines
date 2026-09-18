@@ -18,12 +18,14 @@ class EngineOut(ApiModel):
     csn: int
     tsn: int
     position: str | None
+    overdueMandatoryCount: int = 0
 
     @classmethod
-    def from_orm_engine(cls, e) -> "EngineOut":
+    def from_orm_engine(cls, e, overdue_mandatory_count: int = 0) -> "EngineOut":
         return cls(
             id=e.id, serial=e.serial, family=e.family, operatorCode=e.operator_code,
             operatorName=e.operator_name, csn=e.csn, tsn=e.tsn, position=e.position,
+            overdueMandatoryCount=overdue_mandatory_count,
         )
 
 
@@ -85,6 +87,23 @@ class ShopVisitOut(ApiModel):
             workscope=v.workscope, inductedOn=v.inducted_on, status=v.status,
             releasedAt=v.released_at, releasedBy=v.released_by,
         )
+
+
+class EngineComplianceRow(ApiModel):
+    sbNumber: str
+    title: str
+    category: SbCategory
+    status: SbStatus
+    complianceStatus: ComplianceStatus
+    complianceDeadlineCycles: int | None
+    cyclesRemaining: int | None
+    overdue: bool
+    relatedAdNumber: str | None
+
+
+class BlockingSb(ApiModel):
+    sbNumber: str
+    title: str
 
 
 class ReleaseRequest(BaseModel):

@@ -12,6 +12,7 @@ export interface Engine {
   csn: number;
   tsn: number;
   position: string | null;
+  overdueMandatoryCount: number;
 }
 
 export interface ServiceBulletin {
@@ -50,6 +51,37 @@ export interface ShopVisit {
   releasedBy: string | null;
 }
 
+export interface EngineComplianceRow {
+  sbNumber: string;
+  title: string;
+  category: SbCategory;
+  status: SbStatus;
+  complianceStatus: ComplianceStatus;
+  complianceDeadlineCycles: number | null;
+  cyclesRemaining: number | null;
+  overdue: boolean;
+  relatedAdNumber: string | null;
+}
+
+export interface BlockingSb {
+  sbNumber: string;
+  title: string;
+}
+
+export interface ReleaseBlockedDetail {
+  message: string;
+  blockingSbs: BlockingSb[];
+}
+
+export function releaseBlockedDetail(err: unknown): ReleaseBlockedDetail | null {
+  if (!(err instanceof ApiError) || err.status !== 409) return null;
+  const detail = (err.body as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "object" && detail !== null && "blockingSbs" in detail) {
+    return detail as ReleaseBlockedDetail;
+  }
+  return null;
+}
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
@@ -74,6 +106,8 @@ export const api = {
   engines: () => request<Engine[]>("/engines"),
   engine: (id: number) => request<Engine>(`/engines/${id}`),
   engineSbRecords: (id: number) => request<SbRecord[]>(`/engines/${id}/sb-records`),
+  engineCompliance: (id: number) =>
+    request<EngineComplianceRow[]>(`/engines/${id}/compliance`),
   engineShopVisits: (id: number) => request<ShopVisit[]>(`/engines/${id}/shop-visits`),
   serviceBulletins: () => request<ServiceBulletin[]>("/service-bulletins"),
   shopVisits: () => request<ShopVisit[]>("/shop-visits"),
