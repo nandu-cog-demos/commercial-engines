@@ -3,13 +3,14 @@ import { useParams } from "react-router-dom";
 import { api } from "../api";
 import { useApi } from "../useApi";
 
-type Tab = "overview" | "sb-records" | "shop-visits";
+type Tab = "overview" | "compliance" | "sb-records" | "shop-visits";
 
 export function EngineDetailPage() {
   const { id } = useParams();
   const engineId = Number(id);
   const [tab, setTab] = useState<Tab>("overview");
   const engine = useApi(() => api.engine(engineId), [engineId]);
+  const compliance = useApi(() => api.engineCompliance(engineId), [engineId]);
   const records = useApi(() => api.engineSbRecords(engineId), [engineId]);
   const visits = useApi(() => api.engineShopVisits(engineId), [engineId]);
 
@@ -17,6 +18,8 @@ export function EngineDetailPage() {
   if (engine.error || !engine.data) return <p className="error">{engine.error ?? "Not found"}</p>;
 
   const e = engine.data;
+  const complianceRows = compliance.data ?? [];
+  const overdueCount = complianceRows.filter((r) => r.overdue).length;
 
   return (
     <section>
@@ -31,6 +34,13 @@ export function EngineDetailPage() {
       <div className="tabs">
         <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>
           Overview
+        </button>
+        <button
+          className={tab === "compliance" ? "active" : ""}
+          onClick={() => setTab("compliance")}
+        >
+          Compliance
+          {overdueCount > 0 && <span className="badge">{overdueCount}</span>}
         </button>
         <button
           className={tab === "sb-records" ? "active" : ""}
@@ -66,6 +76,47 @@ export function EngineDetailPage() {
           </div>
         </dl>
       )}
+
+      {tab === "compliance" &&
+        (compliance.error ? (
+          <p className="error">{compliance.error}</p>
+        ) : complianceRows.length === 0 ? (
+          <p className="muted">No applicable service bulletins</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>SB</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>SB Status</th>
+                <th>Compliance</th>
+                <th className="num">Deadline</th>
+                <th className="num">Cycles Remaining</th>
+                <th>AD</th>
+              </tr>
+            </thead>
+            <tbody>
+              {complianceRows.map((r) => (
+                <tr key={r.sbNumber} className={r.overdue ? "overdue" : ""}>
+                  <td>{r.sbNumber}</td>
+                  <td>{r.title}</td>
+                  <td>
+                    <span className={`chip cat-${r.category.toLowerCase()}`}>{r.category}</span>
+                  </td>
+                  <td>{r.status}</td>
+                  <td>
+                    {r.complianceStatus}
+                    {r.overdue && <span className="chip chip-overdue">OVERDUE</span>}
+                  </td>
+                  <td className="num">{r.complianceDeadlineCycles?.toLocaleString() ?? "—"}</td>
+                  <td className="num">{r.cyclesRemaining?.toLocaleString() ?? "—"}</td>
+                  <td>{r.relatedAdNumber ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
 
       {tab === "sb-records" && (
         <table>

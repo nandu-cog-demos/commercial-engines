@@ -40,6 +40,11 @@ export function EnginesPage() {
             <tr key={e.id}>
               <td>
                 <Link to={`/engines/${e.id}`}>{e.serial}</Link>
+                {e.overdueMandatoryCount > 0 && (
+                  <span className="badge" title="Overdue mandatory service bulletins">
+                    {e.overdueMandatoryCount} overdue
+                  </span>
+                )}
               </td>
               <td>{e.family}</td>
               <td>
