@@ -163,6 +163,44 @@ a {
   color: var(--muted);
 }
 
+.section-head {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 22px 0 10px;
+}
+
+.rag {
+  display: inline-block;
+  min-width: 62px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rag-red {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.rag-amber {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.rag-green {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.facts dd.sub {
+  font-size: 12px;
+}
+
 .tabs {
   display: flex;
   gap: 8px;

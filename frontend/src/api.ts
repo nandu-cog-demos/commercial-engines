@@ -50,6 +50,37 @@ export interface ShopVisit {
   releasedBy: string | null;
 }
 
+export type RagStatus = "RED" | "AMBER" | "GREEN";
+
+export interface EngineComplianceSummary {
+  engineId: number;
+  serial: string;
+  family: string;
+  operatorCode: string;
+  operatorName: string;
+  csn: number;
+  ragStatus: RagStatus;
+  applicableSbCount: number;
+  openSbCount: number;
+  overdueMandatoryCount: number;
+}
+
+export interface OperatorComplianceSummary {
+  operatorCode: string;
+  operatorName: string;
+  engineCount: number;
+  enginesWithOverdueMandatory: number;
+  overdueMandatorySbCount: number;
+  engines: EngineComplianceSummary[];
+}
+
+export interface FleetComplianceSummary {
+  engineCount: number;
+  enginesWithOverdueMandatory: number;
+  overdueMandatorySbCount: number;
+  operators: OperatorComplianceSummary[];
+}
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
@@ -72,6 +103,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   engines: () => request<Engine[]>("/engines"),
+  fleetComplianceSummary: () => request<FleetComplianceSummary>("/fleet/compliance-summary"),
   engine: (id: number) => request<Engine>(`/engines/${id}`),
   engineSbRecords: (id: number) => request<SbRecord[]>(`/engines/${id}/sb-records`),
   engineShopVisits: (id: number) => request<ShopVisit[]>(`/engines/${id}/shop-visits`),
