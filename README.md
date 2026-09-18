@@ -64,15 +64,16 @@ Base path `/api/v1`.
 | Method | Path | Description |
 |---|---|---|
 | GET | `/health` | Liveness. |
-| GET | `/engines` | List engines. |
+| GET | `/engines` | List engines (includes `overdueMandatoryCount`). |
 | GET | `/engines/{id}` | Engine detail. |
+| GET | `/engines/{id}/compliance` | Applicable SBs for an engine with compliance status and `overdue` flag. |
 | GET | `/engines/{id}/sb-records` | Raw compliance records logged against an engine. |
 | GET | `/engines/{id}/shop-visits` | Shop visits for an engine. |
 | GET | `/service-bulletins?family=` | List SBs, optional family filter. |
 | GET | `/service-bulletins/{id}` | SB detail. |
 | GET | `/shop-visits` | List shop visits. |
 | GET | `/shop-visits/{id}` | Shop visit detail. |
-| POST | `/shop-visits/{id}/release` | Release a shop visit (`{"releasedBy": "..."}`). |
+| POST | `/shop-visits/{id}/release` | Release a shop visit (`{"releasedBy": "..."}`). 409 with `detail.blockingSbs` while an active mandatory SB is overdue. |
 
 Interactive docs at <http://localhost:8000/docs>.
 
@@ -81,10 +82,11 @@ Interactive docs at <http://localhost:8000/docs>.
 ```bash
 cd backend && . .venv/bin/activate && pytest -q     # backend
 cd frontend && npm run build                        # frontend typecheck + build
+cd frontend && npm run e2e                          # Playwright (starts its own backend on :8001 with a throw-away SQLite DB)
 ```
 
-## Roadmap
+## Specs
 
 The compliance view per engine and the mandatory-SB release gate are specified
 in [`docs/tickets/CES-482-...`](docs/tickets/CES-482-engine-compliance-view-and-release-gate.md)
-and are not yet implemented.
+and [`docs/sdd/NO-196-...`](docs/sdd/NO-196-engine-compliance-view-and-release-gate.md).
