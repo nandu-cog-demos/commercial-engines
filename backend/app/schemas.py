@@ -1,8 +1,11 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
 from .models import ComplianceStatus, SbCategory, SbStatus, ShopVisitStatus
+
+RagStatus = Literal["RED", "AMBER", "GREEN"]
 
 
 class ApiModel(BaseModel):
@@ -89,3 +92,32 @@ class ShopVisitOut(ApiModel):
 
 class ReleaseRequest(BaseModel):
     releasedBy: str
+
+
+class EngineComplianceSummaryOut(ApiModel):
+    engineId: int
+    serial: str
+    family: str
+    operatorCode: str
+    operatorName: str
+    csn: int
+    ragStatus: RagStatus
+    applicableSbCount: int
+    openSbCount: int
+    overdueMandatoryCount: int
+
+
+class OperatorComplianceSummaryOut(ApiModel):
+    operatorCode: str
+    operatorName: str
+    engineCount: int
+    enginesWithOverdueMandatory: int
+    overdueMandatorySbCount: int
+    engines: list[EngineComplianceSummaryOut]
+
+
+class FleetComplianceSummaryOut(ApiModel):
+    engineCount: int
+    enginesWithOverdueMandatory: int
+    overdueMandatorySbCount: int
+    operators: list[OperatorComplianceSummaryOut]

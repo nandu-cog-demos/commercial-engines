@@ -50,6 +50,8 @@ DATABASE_URL=postgresql+psycopg://compliance:compliance@localhost:5432/complianc
 
 ## Pages
 
+- **Fleet Compliance** — per-operator count of engines with overdue mandatory SBs and a
+  red/amber/green status per engine.
 - **Engines** — fleet list with serial, family, operator, cycles/hours, position.
 - **Engine detail** — overview, raw SB records logged against the engine, and
   shop visits for that engine.
@@ -65,6 +67,7 @@ Base path `/api/v1`.
 |---|---|---|
 | GET | `/health` | Liveness. |
 | GET | `/engines` | List engines. |
+| GET | `/fleet/compliance-summary` | Per-operator overdue mandatory SB counts and per-engine R/A/G status. |
 | GET | `/engines/{id}` | Engine detail. |
 | GET | `/engines/{id}/sb-records` | Raw compliance records logged against an engine. |
 | GET | `/engines/{id}/shop-visits` | Shop visits for an engine. |

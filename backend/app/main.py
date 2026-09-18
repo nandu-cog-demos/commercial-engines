@@ -7,9 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import models
+from .compliance import applicable_sbs, rag_status
 from .db import Base, SessionLocal, engine, get_db
 from .schemas import (
+    EngineComplianceSummaryOut,
     EngineOut,
+    FleetComplianceSummaryOut,
+    OperatorComplianceSummaryOut,
     ReleaseRequest,
     SbComplianceOut,
     ServiceBulletinOut,
@@ -80,6 +84,65 @@ def list_engine_shop_visits(engine_id: int, db: Session = Depends(get_db)):
         .order_by(models.ShopVisit.inducted_on.desc())
     ).all()
     return [ShopVisitOut.from_orm_sv(v) for v in rows]
+
+
+def _engine_compliance_summary(
+    e: models.Engine,
+    service_bulletins: list[models.ServiceBulletin],
+    compliance_by_engine: dict[int, dict[int, models.ComplianceStatus]],
+) -> EngineComplianceSummaryOut:
+    rows = applicable_sbs(e, service_bulletins, compliance_by_engine.get(e.id, {}))
+    return EngineComplianceSummaryOut(
+        engineId=e.id,
+        serial=e.serial,
+        family=e.family,
+        operatorCode=e.operator_code,
+        operatorName=e.operator_name,
+        csn=e.csn,
+        ragStatus=rag_status(rows),
+        applicableSbCount=len(rows),
+        openSbCount=sum(
+            1 for r in rows if r.compliance_status == models.ComplianceStatus.OPEN
+        ),
+        overdueMandatoryCount=sum(1 for r in rows if r.blocks_release),
+    )
+
+
+@app.get("/api/v1/fleet/compliance-summary", response_model=FleetComplianceSummaryOut)
+def fleet_compliance_summary(db: Session = Depends(get_db)):
+    """Per-operator overdue mandatory SB counts and a red/amber/green status per engine."""
+    engines = db.scalars(select(models.Engine).order_by(models.Engine.serial)).all()
+    service_bulletins = db.scalars(select(models.ServiceBulletin)).all()
+    compliance_by_engine: dict[int, dict[int, models.ComplianceStatus]] = {}
+    for record in db.scalars(select(models.SbCompliance)).all():
+        compliance_by_engine.setdefault(record.engine_id, {})[record.sb_id] = record.status
+
+    operators: dict[str, OperatorComplianceSummaryOut] = {}
+    for e in engines:
+        summary = _engine_compliance_summary(e, list(service_bulletins), compliance_by_engine)
+        operator = operators.setdefault(
+            e.operator_code,
+            OperatorComplianceSummaryOut(
+                operatorCode=e.operator_code,
+                operatorName=e.operator_name,
+                engineCount=0,
+                enginesWithOverdueMandatory=0,
+                overdueMandatorySbCount=0,
+                engines=[],
+            ),
+        )
+        operator.engines.append(summary)
+        operator.engineCount += 1
+        operator.enginesWithOverdueMandatory += 1 if summary.overdueMandatoryCount else 0
+        operator.overdueMandatorySbCount += summary.overdueMandatoryCount
+
+    ordered = sorted(operators.values(), key=lambda o: o.operatorName)
+    return FleetComplianceSummaryOut(
+        engineCount=len(engines),
+        enginesWithOverdueMandatory=sum(o.enginesWithOverdueMandatory for o in ordered),
+        overdueMandatorySbCount=sum(o.overdueMandatorySbCount for o in ordered),
+        operators=ordered,
+    )
 
 
 @app.get("/api/v1/service-bulletins", response_model=list[ServiceBulletinOut])
