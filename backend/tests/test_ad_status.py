@@ -43,7 +43,7 @@ def test_ad_status_is_amber_when_mandatory_ad_is_open_before_its_deadline(client
     assert status["state"] == "AMBER"
     assert status["overdueCount"] == 0
     assert status["openCount"] == 1
-    assert status["headline"] == "1 mandatory AD open, none overdue at CSN 12,600"
+    assert status["headline"] == "1 mandatory AD open at CSN 12,600"
     assert status["directives"] == [
         {
             "sbNumber": "TF9-73-0044",

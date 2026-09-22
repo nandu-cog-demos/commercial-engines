@@ -73,7 +73,7 @@ def _headline(state: AdBannerState, count: int, csn: int) -> str:
     if state is AdBannerState.RED:
         return f"{count} mandatory {plural} overdue at {cycles}"
     if state is AdBannerState.AMBER:
-        return f"{count} mandatory {plural} open, none overdue at {cycles}"
+        return f"{count} mandatory {plural} open at {cycles}"
     return f"No mandatory AD open at {cycles}"
 
 

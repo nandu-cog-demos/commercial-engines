@@ -1,33 +1,39 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { api, type EngineAdStatus } from "../api";
+import { api, type AdDirective, type EngineAdStatus } from "../api";
 import { useApi } from "../useApi";
 
 type Tab = "overview" | "sb-records" | "shop-visits";
 
-const BANNER_CLASS: Record<EngineAdStatus["state"], string> = {
-  RED: "banner-red",
-  AMBER: "banner-amber",
-  GREEN: "banner-green",
+const BANNER: Record<EngineAdStatus["state"], { className: string; label: string }> = {
+  RED: { className: "banner-red", label: "Airworthiness directives — action required" },
+  AMBER: { className: "banner-amber", label: "Airworthiness directives — due soon" },
+  GREEN: { className: "banner-green", label: "Airworthiness directives — clear" },
 };
 
+function cyclesLabel(d: AdDirective): string {
+  if (d.cyclesRemaining === null) return "no cycle deadline";
+  if (d.overdue) return `overdue by ${Math.abs(d.cyclesRemaining).toLocaleString()} cycles`;
+  return `${d.cyclesRemaining.toLocaleString()} cycles remaining`;
+}
+
 function AdStatusBanner({ status }: { status: EngineAdStatus }) {
+  const { className, label } = BANNER[status.state];
   return (
-    <section className={`ad-banner ${BANNER_CLASS[status.state]}`} aria-label="Airworthiness directive status">
-      <h2>{status.headline}</h2>
+    <section className={`ad-banner ${className}`} aria-label="Airworthiness directive status">
+      <h2 className="ad-banner-head">
+        <span className="ad-banner-dot" aria-hidden="true" />
+        <span className="ad-banner-label">{label}</span>
+        <span className="ad-banner-headline">{status.headline}</span>
+      </h2>
       {status.directives.length > 0 && (
         <ul className="ad-banner-list">
           {status.directives.map((d) => (
             <li key={d.sbNumber}>
-              <span className="ad-banner-sb">{d.sbNumber}</span>
-              <span>{d.title}</span>
-              <span className="ad-banner-cycles">
-                {d.cyclesRemaining === null
-                  ? "no cycle deadline"
-                  : d.overdue
-                    ? `${Math.abs(d.cyclesRemaining).toLocaleString()} cycles overdue`
-                    : `${d.cyclesRemaining.toLocaleString()} cycles remaining`}
-              </span>
+              <span className="ad-banner-ad">{d.relatedAdNumber ?? "No AD"}</span>
+              <span className="ad-banner-sb">SB {d.sbNumber}</span>
+              <span className="ad-banner-title">{d.title}</span>
+              <span className="ad-banner-cycles">{cyclesLabel(d)}</span>
             </li>
           ))}
         </ul>

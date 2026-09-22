@@ -22,7 +22,7 @@ ENGINES = [
     dict(serial="TF9-001750", family="TF-9", operator_code="NWA", operator_name="Northwind Air",
          csn=15020, tsn=33410, position="N781NW / #1"),
     dict(serial="TF9-001300", family="TF-9", operator_code="NWA", operator_name="Northwind Air",
-         csn=12600, tsn=28450, position="N774NW / #2"),
+         csn=12600, tsn=27400, position="737-8 N738NW / #2"),
     dict(serial="TF9-002000", family="TF-9", operator_code="CCG", operator_name="Cascadia Cargo",
          csn=3100, tsn=7940, position="N204CC / #2"),
     dict(serial="TF9-000812", family="TF-9", operator_code="CCG", operator_name="Cascadia Cargo",
