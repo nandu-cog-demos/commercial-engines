@@ -81,4 +81,6 @@ def test_ad_status_ignores_non_mandatory_and_out_of_range_bulletins(client):
 
 
 def test_ad_status_for_missing_engine_404(client):
-    assert client.get("/api/v1/engines/999999/ad-status").status_code == 404
+    resp = client.get("/api/v1/engines/999999/ad-status")
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "Engine not found"}
