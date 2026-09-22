@@ -38,6 +38,29 @@ export interface SbRecord {
   compliedAtCsn: number | null;
 }
 
+export type AdBannerState = "RED" | "AMBER" | "GREEN";
+
+export interface AdDirective {
+  sbId: number;
+  sbNumber: string;
+  adNumber: string | null;
+  title: string;
+  complianceStatus: ComplianceStatus;
+  complianceDeadlineCycles: number | null;
+  cyclesRemaining: number | null;
+  overdue: boolean;
+}
+
+export interface EngineAdStatus {
+  engineId: number;
+  serial: string;
+  csn: number;
+  state: AdBannerState;
+  overdueCount: number;
+  dueSoonCount: number;
+  directives: AdDirective[];
+}
+
 export interface ShopVisit {
   id: number;
   engineId: number;
@@ -74,6 +97,7 @@ export const api = {
   engines: () => request<Engine[]>("/engines"),
   engine: (id: number) => request<Engine>(`/engines/${id}`),
   engineSbRecords: (id: number) => request<SbRecord[]>(`/engines/${id}/sb-records`),
+  engineAdStatus: (id: number) => request<EngineAdStatus>(`/engines/${id}/ad-status`),
   engineShopVisits: (id: number) => request<ShopVisit[]>(`/engines/${id}/shop-visits`),
   serviceBulletins: () => request<ServiceBulletin[]>("/service-bulletins"),
   shopVisits: () => request<ShopVisit[]>("/shop-visits"),

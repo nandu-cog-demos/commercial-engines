@@ -1,8 +1,15 @@
+import enum
 from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
 from .models import ComplianceStatus, SbCategory, SbStatus, ShopVisitStatus
+
+
+class AdBannerState(str, enum.Enum):
+    RED = "RED"
+    AMBER = "AMBER"
+    GREEN = "GREEN"
 
 
 class ApiModel(BaseModel):
@@ -65,6 +72,27 @@ class SbComplianceOut(ApiModel):
             id=c.id, engineId=c.engine_id, sbId=c.sb_id, sbNumber=c.service_bulletin.sb_number,
             status=c.status, compliedDate=c.complied_date, compliedAtCsn=c.complied_at_csn,
         )
+
+
+class AdDirectiveOut(ApiModel):
+    sbId: int
+    sbNumber: str
+    adNumber: str | None
+    title: str
+    complianceStatus: ComplianceStatus
+    complianceDeadlineCycles: int | None
+    cyclesRemaining: int | None
+    overdue: bool
+
+
+class EngineAdStatusOut(ApiModel):
+    engineId: int
+    serial: str
+    csn: int
+    state: AdBannerState
+    overdueCount: int
+    dueSoonCount: int
+    directives: list[AdDirectiveOut]
 
 
 class ShopVisitOut(ApiModel):

@@ -206,3 +206,79 @@ a {
   margin: 4px 0 0;
   font-size: 18px;
 }
+
+.ad-banner {
+  margin: 16px 0 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.ad-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px 10px;
+}
+
+.ad-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.ad-row {
+  display: grid;
+  grid-template-columns: 120px 140px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ad-row + .ad-row {
+  margin-top: 8px;
+}
+
+.ad-cycles {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-red {
+  color: var(--danger);
+  border-color: rgba(224, 87, 74, 0.5);
+  background: rgba(224, 87, 74, 0.08);
+}
+
+.ad-amber {
+  color: var(--warn);
+  border-color: rgba(224, 164, 74, 0.5);
+  background: rgba(224, 164, 74, 0.08);
+}
+
+.ad-green {
+  color: var(--ok);
+  border-color: rgba(74, 192, 122, 0.5);
+  background: rgba(74, 192, 122, 0.08);
+}
+
+.ad-banner .ad-row {
+  color: var(--text);
+}
+
+.ad-banner .ad-row .ad-cycles {
+  color: inherit;
+}
+
+.ad-red .ad-row .ad-cycles {
+  color: var(--danger);
+}
+
+.ad-amber .ad-row .ad-cycles {
+  color: var(--warn);
+}

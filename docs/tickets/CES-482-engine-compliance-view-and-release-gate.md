@@ -85,3 +85,8 @@ and the gate can reason about it (see below).
   its SB status is `TERMINATED`, so it must **not** block release.
 - `TF9-73-0044` has two disjoint ranges (`000500-000900,001200-001300`) for the
   range-parsing test.
+- `TF9-001300` (CSN 12,600, added for BFC-1): applicable `TF9-73-0044`
+  (deadline 13,000, MANDATORY, OPEN) → **not yet overdue, 400 cycles
+  remaining**; `TF9-72-0031` is also applicable (suffix `1300` is inside
+  `001000-001500`) but is recorded `COMPLIED` at CSN 11,450, so the engine has
+  exactly one open mandatory SB. This is the "due soon" scenario.

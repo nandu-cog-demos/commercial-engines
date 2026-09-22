@@ -7,8 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import models
+from .compliance import directive_states
 from .db import Base, SessionLocal, engine, get_db
 from .schemas import (
+    AdBannerState,
+    AdDirectiveOut,
+    EngineAdStatusOut,
     EngineOut,
     ReleaseRequest,
     SbComplianceOut,
@@ -68,6 +72,50 @@ def list_engine_sb_records(engine_id: int, db: Session = Depends(get_db)):
         .where(models.SbCompliance.engine_id == engine_id)
     ).all()
     return [SbComplianceOut.from_orm_row(r) for r in rows]
+
+
+@app.get("/api/v1/engines/{engine_id}/ad-status", response_model=EngineAdStatusOut)
+def get_engine_ad_status(engine_id: int, db: Session = Depends(get_db)):
+    """Airworthiness-directive state of an engine: applicable mandatory SBs still open."""
+    e = _engine_or_404(engine_id, db)
+    bulletins = db.scalars(
+        select(models.ServiceBulletin).where(models.ServiceBulletin.family == e.family)
+    ).all()
+    recorded = {
+        c.sb_id: c.status
+        for c in db.scalars(
+            select(models.SbCompliance).where(models.SbCompliance.engine_id == engine_id)
+        ).all()
+    }
+    states = directive_states(e, list(bulletins), recorded)
+    overdue = [s for s in states if s.overdue]
+    if overdue:
+        state = AdBannerState.RED
+    elif states:
+        state = AdBannerState.AMBER
+    else:
+        state = AdBannerState.GREEN
+    return EngineAdStatusOut(
+        engineId=e.id,
+        serial=e.serial,
+        csn=e.csn,
+        state=state,
+        overdueCount=len(overdue),
+        dueSoonCount=len(states) - len(overdue),
+        directives=[
+            AdDirectiveOut(
+                sbId=s.sb.id,
+                sbNumber=s.sb.sb_number,
+                adNumber=s.sb.related_ad_number,
+                title=s.sb.title,
+                complianceStatus=s.compliance_status,
+                complianceDeadlineCycles=s.sb.compliance_deadline_cycles,
+                cyclesRemaining=s.cycles_remaining,
+                overdue=s.overdue,
+            )
+            for s in states
+        ],
+    )
 
 
 @app.get("/api/v1/engines/{engine_id}/shop-visits", response_model=list[ShopVisitOut])

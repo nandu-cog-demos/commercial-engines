@@ -76,3 +76,62 @@ def test_release_already_released_conflicts(client):
 
 def test_get_missing_engine_404(client):
     assert client.get("/api/v1/engines/999999").status_code == 404
+
+
+def test_ad_status_red_engine(client):
+    e = _engine_by_serial(client, "TF9-001234")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "RED"
+    assert body["csn"] == 14250
+    assert body["overdueCount"] == 2
+    assert body["dueSoonCount"] == 0
+    by_sb = {d["sbNumber"]: d for d in body["directives"]}
+    assert set(by_sb) == {"TF9-72-0031", "TF9-73-0044"}
+    assert by_sb["TF9-72-0031"]["cyclesRemaining"] == -2250
+    assert by_sb["TF9-72-0031"]["adNumber"] == "AD 2025-14-07"
+    assert by_sb["TF9-73-0044"]["cyclesRemaining"] == -1250
+    assert all(d["overdue"] for d in body["directives"])
+
+
+def test_ad_status_amber_engine(client):
+    e = _engine_by_serial(client, "TF9-001300")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "AMBER"
+    assert (body["overdueCount"], body["dueSoonCount"]) == (0, 1)
+    directive = body["directives"][0]
+    assert directive["sbNumber"] == "TF9-73-0044"
+    assert directive["cyclesRemaining"] == 400
+    assert directive["overdue"] is False
+
+
+def test_ad_status_green_engine(client):
+    e = _engine_by_serial(client, "TF9-000812")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "GREEN"
+    assert body["directives"] == []
+
+
+def test_ad_status_ignores_terminated_sb(client):
+    e = _engine_by_serial(client, "TF9-001750")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "GREEN"
+    assert body["overdueCount"] == 0
+    assert "TF9-72-0019" not in {d["sbNumber"] for d in body["directives"]}
+
+
+def test_ad_status_no_applicable_sb(client):
+    e = _engine_by_serial(client, "TF7X-000100")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "GREEN"
+    assert body["directives"] == []
+
+
+def test_ad_status_ignores_non_mandatory_sb(client):
+    e = _engine_by_serial(client, "TF9-002000")
+    body = client.get(f"/api/v1/engines/{e['id']}/ad-status").json()
+    assert body["state"] == "GREEN"
+    assert body["directives"] == []
+
+
+def test_ad_status_missing_engine_404(client):
+    assert client.get("/api/v1/engines/999999/ad-status").status_code == 404
