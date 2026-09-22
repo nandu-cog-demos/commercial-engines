@@ -25,6 +25,12 @@ class ComplianceStatus(str, enum.Enum):
     NOT_APPLICABLE = "NOT_APPLICABLE"
 
 
+class AdBannerState(str, enum.Enum):
+    RED = "RED"
+    AMBER = "AMBER"
+    GREEN = "GREEN"
+
+
 class ShopVisitStatus(str, enum.Enum):
     INDUCTED = "INDUCTED"
     IN_WORK = "IN_WORK"

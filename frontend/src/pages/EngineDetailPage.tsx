@@ -1,15 +1,53 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api";
+import { api, type AdDirective, type EngineAdStatus } from "../api";
 import { useApi } from "../useApi";
 
 type Tab = "overview" | "sb-records" | "shop-visits";
+
+const BANNER: Record<EngineAdStatus["state"], { className: string; label: string }> = {
+  RED: { className: "banner-red", label: "Airworthiness directives — action required" },
+  AMBER: { className: "banner-amber", label: "Airworthiness directives — due soon" },
+  GREEN: { className: "banner-green", label: "Airworthiness directives — clear" },
+};
+
+function cyclesLabel(d: AdDirective): string {
+  if (d.cyclesRemaining === null) return "no cycle deadline";
+  if (d.overdue) return `overdue by ${Math.abs(d.cyclesRemaining).toLocaleString()} cycles`;
+  return `${d.cyclesRemaining.toLocaleString()} cycles remaining`;
+}
+
+function AdStatusBanner({ status }: { status: EngineAdStatus }) {
+  const { className, label } = BANNER[status.state];
+  return (
+    <section className={`ad-banner ${className}`} aria-label="Airworthiness directive status">
+      <h2 className="ad-banner-head">
+        <span className="ad-banner-dot" aria-hidden="true" />
+        <span className="ad-banner-label">{label}</span>
+        <span className="ad-banner-headline">{status.headline}</span>
+      </h2>
+      {status.directives.length > 0 && (
+        <ul className="ad-banner-list">
+          {status.directives.map((d) => (
+            <li key={d.sbNumber}>
+              <span className="ad-banner-ad">{d.relatedAdNumber ?? "No AD"}</span>
+              <span className="ad-banner-sb">SB {d.sbNumber}</span>
+              <span className="ad-banner-title">{d.title}</span>
+              <span className="ad-banner-cycles">{cyclesLabel(d)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export function EngineDetailPage() {
   const { id } = useParams();
   const engineId = Number(id);
   const [tab, setTab] = useState<Tab>("overview");
   const engine = useApi(() => api.engine(engineId), [engineId]);
+  const adStatus = useApi(() => api.engineAdStatus(engineId), [engineId]);
   const records = useApi(() => api.engineSbRecords(engineId), [engineId]);
   const visits = useApi(() => api.engineShopVisits(engineId), [engineId]);
 
@@ -27,6 +65,10 @@ export function EngineDetailPage() {
       <p className="muted">
         {e.operatorName} ({e.operatorCode}) · {e.position ?? "unassigned"}
       </p>
+
+      {adStatus.loading && <p className="muted">Loading airworthiness directive status…</p>}
+      {adStatus.error && <p className="error">{adStatus.error}</p>}
+      {adStatus.data && <AdStatusBanner status={adStatus.data} />}
 
       <div className="tabs">
         <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>

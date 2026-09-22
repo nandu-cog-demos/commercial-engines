@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from .models import ComplianceStatus, SbCategory, SbStatus, ShopVisitStatus
+from .models import AdBannerState, ComplianceStatus, SbCategory, SbStatus, ShopVisitStatus
 
 
 class ApiModel(BaseModel):
@@ -64,6 +64,45 @@ class SbComplianceOut(ApiModel):
         return cls(
             id=c.id, engineId=c.engine_id, sbId=c.sb_id, sbNumber=c.service_bulletin.sb_number,
             status=c.status, compliedDate=c.complied_date, compliedAtCsn=c.complied_at_csn,
+        )
+
+
+class AdDirectiveOut(ApiModel):
+    sbNumber: str
+    title: str
+    category: SbCategory
+    complianceStatus: ComplianceStatus
+    relatedAdNumber: str | None
+    deadlineCycles: int | None
+    cyclesRemaining: int | None
+    overdue: bool
+
+    @classmethod
+    def from_item(cls, d) -> "AdDirectiveOut":
+        return cls(
+            sbNumber=d.sb_number, title=d.title, category=d.category,
+            complianceStatus=d.compliance_status, relatedAdNumber=d.related_ad_number,
+            deadlineCycles=d.deadline_cycles, cyclesRemaining=d.cycles_remaining,
+            overdue=d.overdue,
+        )
+
+
+class EngineAdStatusOut(ApiModel):
+    engineId: int
+    serial: str
+    csn: int
+    state: AdBannerState
+    headline: str
+    overdueCount: int
+    openCount: int
+    directives: list[AdDirectiveOut]
+
+    @classmethod
+    def from_status(cls, s) -> "EngineAdStatusOut":
+        return cls(
+            engineId=s.engine.id, serial=s.engine.serial, csn=s.engine.csn, state=s.state,
+            headline=s.headline, overdueCount=s.overdue_count, openCount=s.open_count,
+            directives=[AdDirectiveOut.from_item(d) for d in s.directives],
         )
 
 

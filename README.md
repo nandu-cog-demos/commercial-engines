@@ -67,6 +67,7 @@ Base path `/api/v1`.
 | GET | `/engines` | List engines. |
 | GET | `/engines/{id}` | Engine detail. |
 | GET | `/engines/{id}/sb-records` | Raw compliance records logged against an engine. |
+| GET | `/engines/{id}/ad-status` | Airworthiness directive banner state for an engine. |
 | GET | `/engines/{id}/shop-visits` | Shop visits for an engine. |
 | GET | `/service-bulletins?family=` | List SBs, optional family filter. |
 | GET | `/service-bulletins/{id}` | SB detail. |

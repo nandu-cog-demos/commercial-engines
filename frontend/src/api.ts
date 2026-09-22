@@ -50,6 +50,30 @@ export interface ShopVisit {
   releasedBy: string | null;
 }
 
+export type AdBannerState = "RED" | "AMBER" | "GREEN";
+
+export interface AdDirective {
+  sbNumber: string;
+  title: string;
+  category: SbCategory;
+  complianceStatus: ComplianceStatus;
+  relatedAdNumber: string | null;
+  deadlineCycles: number | null;
+  cyclesRemaining: number | null;
+  overdue: boolean;
+}
+
+export interface EngineAdStatus {
+  engineId: number;
+  serial: string;
+  csn: number;
+  state: AdBannerState;
+  headline: string;
+  overdueCount: number;
+  openCount: number;
+  directives: AdDirective[];
+}
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
@@ -74,6 +98,7 @@ export const api = {
   engines: () => request<Engine[]>("/engines"),
   engine: (id: number) => request<Engine>(`/engines/${id}`),
   engineSbRecords: (id: number) => request<SbRecord[]>(`/engines/${id}/sb-records`),
+  engineAdStatus: (id: number) => request<EngineAdStatus>(`/engines/${id}/ad-status`),
   engineShopVisits: (id: number) => request<ShopVisit[]>(`/engines/${id}/shop-visits`),
   serviceBulletins: () => request<ServiceBulletin[]>("/service-bulletins"),
   shopVisits: () => request<ShopVisit[]>("/shop-visits"),
