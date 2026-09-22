@@ -77,6 +77,9 @@ and the gate can reason about it (see below).
 - `TF9-001234` (CSN 14,250): applicable `TF9-72-0031` (deadline 12,000,
   MANDATORY, OPEN) and `TF9-73-0044` (deadline 13,000, MANDATORY, OPEN) → **both
   overdue**; has an open (`IN_WORK`) shop visit.
+- `TF9-001300` (CSN 12,600): applicable `TF9-73-0044` (deadline 13,000,
+  MANDATORY, OPEN) → **not yet overdue**, 400 cycles remaining; `TF9-72-0031`
+  is COMPLIED. Added for BFC-1 as the amber banner scenario.
 - `TF9-002000` (CSN 3,100): applicable `TF9-79-0012` (RECOMMENDED, no deadline,
   OPEN).
 - `TF7X-000100` (CSN 22,000): no applicable SB (only `TF7X-75-0003` exists for

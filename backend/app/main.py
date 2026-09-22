@@ -7,8 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import models
+from .ad_status import ad_status
 from .db import Base, SessionLocal, engine, get_db
 from .schemas import (
+    EngineAdStatusOut,
     EngineOut,
     ReleaseRequest,
     SbComplianceOut,
@@ -68,6 +70,13 @@ def list_engine_sb_records(engine_id: int, db: Session = Depends(get_db)):
         .where(models.SbCompliance.engine_id == engine_id)
     ).all()
     return [SbComplianceOut.from_orm_row(r) for r in rows]
+
+
+@app.get("/api/v1/engines/{engine_id}/ad-status", response_model=EngineAdStatusOut)
+def get_engine_ad_status(engine_id: int, db: Session = Depends(get_db)):
+    """Airworthiness-directive banner state for an engine."""
+    e = _engine_or_404(engine_id, db)
+    return EngineAdStatusOut.from_status(ad_status(e, db))
 
 
 @app.get("/api/v1/engines/{engine_id}/shop-visits", response_model=list[ShopVisitOut])

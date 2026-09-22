@@ -1,15 +1,47 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api";
+import { api, type EngineAdStatus } from "../api";
 import { useApi } from "../useApi";
 
 type Tab = "overview" | "sb-records" | "shop-visits";
+
+const BANNER_CLASS: Record<EngineAdStatus["state"], string> = {
+  RED: "banner-red",
+  AMBER: "banner-amber",
+  GREEN: "banner-green",
+};
+
+function AdStatusBanner({ status }: { status: EngineAdStatus }) {
+  return (
+    <section className={`ad-banner ${BANNER_CLASS[status.state]}`} aria-label="Airworthiness directive status">
+      <h2>{status.headline}</h2>
+      {status.directives.length > 0 && (
+        <ul className="ad-banner-list">
+          {status.directives.map((d) => (
+            <li key={d.sbNumber}>
+              <span className="ad-banner-sb">{d.sbNumber}</span>
+              <span>{d.title}</span>
+              <span className="ad-banner-cycles">
+                {d.cyclesRemaining === null
+                  ? "no cycle deadline"
+                  : d.overdue
+                    ? `${Math.abs(d.cyclesRemaining).toLocaleString()} cycles overdue`
+                    : `${d.cyclesRemaining.toLocaleString()} cycles remaining`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export function EngineDetailPage() {
   const { id } = useParams();
   const engineId = Number(id);
   const [tab, setTab] = useState<Tab>("overview");
   const engine = useApi(() => api.engine(engineId), [engineId]);
+  const adStatus = useApi(() => api.engineAdStatus(engineId), [engineId]);
   const records = useApi(() => api.engineSbRecords(engineId), [engineId]);
   const visits = useApi(() => api.engineShopVisits(engineId), [engineId]);
 
@@ -27,6 +59,10 @@ export function EngineDetailPage() {
       <p className="muted">
         {e.operatorName} ({e.operatorCode}) · {e.position ?? "unassigned"}
       </p>
+
+      {adStatus.loading && <p className="muted">Loading airworthiness directive status…</p>}
+      {adStatus.error && <p className="error">{adStatus.error}</p>}
+      {adStatus.data && <AdStatusBanner status={adStatus.data} />}
 
       <div className="tabs">
         <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>
