@@ -83,5 +83,7 @@ and the gate can reason about it (see below).
   TF-7X, range `000200-000400`; serial suffix `100` is outside it).
 - `TF9-001750`: applicable `TF9-72-0019` — MANDATORY and would be overdue, but
   its SB status is `TERMINATED`, so it must **not** block release.
+- `TF9-001300` (CSN 12,600): applicable `TF9-73-0044` (deadline 13,000,
+  MANDATORY, OPEN) → **not** overdue, 400 cycles remaining.
 - `TF9-73-0044` has two disjoint ranges (`000500-000900,001200-001300`) for the
   range-parsing test.
